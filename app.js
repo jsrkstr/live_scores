@@ -3,26 +3,37 @@
  * Module dependencies.
  */
 
-var app = require('express')()
+var express = require('express')
+  , app = express()
   , server = require('http').createServer(app)
   , io = require('socket.io').listen(server)
   , http_get = require('http-get')
-  , routes = require('./routes');
+  , routes = require('./routes')
+  , other_routes = require('./routes/commentary')
+  , path = require('path');
+
+
+// app config
+app.configure(function(){
+  app.set('port', process.env.PORT || 3000);
+  app.set('views', __dirname + '/views');
+  app.set('view engine', 'jade');
+  app.use(express.favicon());
+  app.use(express.logger('dev'));
+  app.use(express.bodyParser());
+  app.use(express.methodOverride());
+  app.use(app.router);
+  app.use(express.static(path.join(__dirname, 'public')));
+});
+
+app.configure('development', function(){
+  app.use(express.errorHandler());
+});
 
 
 // Routes
 app.get('/', routes.index);
-
-app.get('/commentary/:match_id', function(req, res){
-  
-  var match_id = req.params.match_id;
-  console.log("GET - ", match_id);
-
-  res.set('Content-Type', 'audio/mpeg');
-  res.set("Connection", "close");
-  res.sendfile("./" + match_id + ".mp3");
-
-});
+app.get('/commentary/:match_id', other_routes.commentary);
 
 
 // start..
@@ -31,8 +42,12 @@ server.listen(3000);
 
 
 // Socket.io
+io.configure('development', function(){
+  io.set('log level', 1);   
+});
+
 io.sockets.on('connection', function(socket) {
-  console.log(socket.id);
+  console.log("WebSocket connected - ", socket.id);
 });
 
 
@@ -127,7 +142,7 @@ App = {
 
       // hack
       var result = { 
-        buffer : '{ "items" : [{ ":uid" : "contest-20110159559", "long_message" : "India won"}] }'
+        buffer : '{ "items" : [{ ":uid" : "contest-20110159559", "long_message" : "Sachin goes for a hit, its a six!"}] }'
       };
 
         var data = JSON.parse(result.buffer);
@@ -141,7 +156,7 @@ App = {
           // get tts
           App.saveTTS(match_id, data.items[lastItemIndex].long_message, function(result){
             // result.code/buffer/headers/urlt.buffer;
-            App.emitNotification(match_id);
+            App.emitNotification({ match_id : match_id, "event" : data.items[lastItemIndex] });
           });
 
           // save
@@ -153,16 +168,18 @@ App = {
   },
 
 
-  emitNotification : function(match_id){
+  emitNotification : function(data){
 
-    console.log("emitting notification - ", match_id);
+    console.log("emitting notification - ", data.match_id);
 
-    // console.log(io.sockets.sockets)
-    // io.sockets.sockets.forEach(function(socket){
-    //   socket.emit(match_id);
-    // });
+    for(var key in io.sockets.sockets){
+      console.log("emmited to " + key);
+      io.sockets.sockets[key].emit("notification", data);
+    }
 
   },
+
+
 
 
   saveTTS : function(match_id, text, callback){
@@ -177,7 +194,7 @@ App = {
       url:  "http://tts.labs.ericsson.net/read?devkey=" + key + "&text=" + text,
     };
 
-    http_get.get(options, "./" + matchId + '.mp3', function (error, result) {
+    http_get.get(options, "./audio/" + matchId + '.mp3', function (error, result) {
       if (error) {
         console.error(error);
       } else {

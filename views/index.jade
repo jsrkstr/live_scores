@@ -1,5 +1,17 @@
 extends layout
 
 block content
-  h1= title
-  p Welcome to #{title}
+	h1= title
+	p Welcome to #{title}
+	audio(autoplay='autoplay')
+	ul(id='messages')
+	script(type='text/javascript', src='/socket.io/socket.io.js')
+	script(type='text/javascript')
+		socket = io.connect('http://lh:3000');
+		socket.on("notification", function(data){
+			console.log("event", data.match_id);
+			var li = document.createElement('li');
+			li.innerHTML = data.event.long_message;
+			document.getElementById('messages').appendChild(li);
+			document.getElementsByTagName('audio')[0].src = '/commentary/' + data.match_id;
+		});
