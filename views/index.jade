@@ -2,8 +2,10 @@ extends layout
 
 block content
 	h1 Live Commentary
-	p Select a live match
-
+	- if(matches.length != 0)
+		p Select a live match
+	else
+		p Sorry, No live matches.
 	ul
 	each match in matches
 		li 
