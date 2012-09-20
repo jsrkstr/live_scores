@@ -10,6 +10,7 @@ var express = require('express')
   , http_get = require('http-get')
   , routes = require('./routes')
   , other_routes = require('./routes/commentary')
+  , show_route = require("./routes/show")
   , path = require('path');
 
 
@@ -33,6 +34,7 @@ app.configure('development', function(){
 
 // Routes
 app.get('/', routes.index);
+app.get('/show/:match_id', show_route.show);
 app.get('/commentary/:match_id', other_routes.commentary);
 
 
@@ -99,9 +101,9 @@ App = {
           };
         }
 
-        App.live_sports = live_contests;
+        App.live_matches = live_contests;
         App.checkEventForAllMatches();
-        console.log("live matches - ", App.live_sports.length);
+        console.log("live matches - ", App.live_matches.length);
     //   }
     // });
   },
@@ -110,9 +112,9 @@ App = {
   checkEventForAllMatches : function(){
     console.log("checking events for all matches...")
     // hack 
-    App.checkForEvent(App.live_sports[0][":uid"]);
+    App.checkForEvent(App.live_matches[0][":uid"]);
 
-    // App.live_sports.forEach(function(match){
+    // App.live_matches.forEach(function(match){
     //   App.checkForEvent(match[":uid"]);
     // });
   },

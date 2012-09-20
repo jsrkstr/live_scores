@@ -1,0 +1,24 @@
+extends layout
+
+block content
+
+	h1= match.title
+	p  Live Commentary
+
+	ul(id='messages')
+	audio(autoplay='autoplay')
+
+	script(type='text/javascript', src='/socket.io/socket.io.js')
+	script(type='text/javascript')
+		socket = io.connect('http://lh:3000');
+		socket.on("notification", function(data){
+			
+			console.log("event", data.match_id);
+
+			if(data.match_id == "#{match[':uid']}"){
+				var li = document.createElement('li');
+				li.innerHTML = data.event.long_message;
+				document.getElementById('messages').appendChild(li);
+				document.getElementsByTagName('audio')[0].src = '/commentary/' + data.match_id;
+			}
+		});
