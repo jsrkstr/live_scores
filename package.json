@@ -1,7 +1,7 @@
 {
   "name":"live_scores",
   "node":"0.6.12",
-  "author":"sachin132"
+  "author":"sachin132",
   "version": "0.0.1",
   "dependencies": {
     "express": "3.0.0rc4",
